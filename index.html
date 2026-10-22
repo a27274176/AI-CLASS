@@ -34,6 +34,374 @@ footer{margin-top:40px;border-top:1px solid #d8ded2;padding-top:20px}
 @media(max-width:700px){.cards{grid-template-columns:1fr 1fr}h1{font-size:38px}}
 </style>
 </head>
+<style>
+.chart-section{
+  margin:35px 0;
+}
+.chart-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+.chart-box{
+  background:white;
+  border:1px solid #d8ded2;
+  border-radius:12px;
+  padding:24px;
+}
+.chart-box h3{
+  margin:0 0 8px;
+  font:24px Georgia,serif;
+}
+.chart-description{
+  color:#63736d;
+  font-size:13px;
+  margin:0 0 24px;
+}
+.donut-layout{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:25px;
+  flex-wrap:wrap;
+  padding:15px 0;
+}
+.donut{
+  width:190px;
+  height:190px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  flex-shrink:0;
+}
+.donut-hole{
+  width:135px;
+  height:135px;
+  background:white;
+  border-radius:50%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.donut-hole strong{
+  font:28px Georgia,serif;
+}
+.donut-hole span{
+  font-size:11px;
+  color:#63736d;
+}
+.legend-item{
+  margin:14px 0;
+  font-size:13px;
+}
+.legend-dot{
+  display:inline-block;
+  width:11px;
+  height:11px;
+  border-radius:3px;
+  margin-right:7px;
+}
+.legend-value{
+  display:block;
+  margin-left:22px;
+  color:#63736d;
+}
+.compare-group{
+  margin:24px 0;
+}
+.compare-title{
+  font-size:14px;
+  font-weight:bold;
+  margin-bottom:12px;
+}
+.compare-label{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  margin:10px 0 5px;
+}
+.chart-track{
+  background:#eef0e8;
+  height:14px;
+  border-radius:5px;
+  overflow:hidden;
+}
+.chart-bar{
+  height:100%;
+  border-radius:5px;
+}
+.chart-small-note{
+  color:#63736d;
+  font-size:12px;
+  margin-top:18px;
+}
+.county-chart{
+  margin-top:20px;
+}
+.county-chart-row{
+  display:grid;
+  grid-template-columns:145px 1fr 65px;
+  align-items:center;
+  gap:12px;
+  padding:7px 8px;
+  border-radius:5px;
+}
+.county-chart-row.active{
+  background:#e5edd9;
+}
+.county-chart-name{
+  border:0;
+  background:none;
+  text-align:left;
+  color:#173c39;
+  padding:0;
+  font:12px Arial,sans-serif;
+  cursor:pointer;
+}
+.county-chart-name:hover{
+  text-decoration:underline;
+}
+.county-chart-value{
+  font-size:12px;
+  text-align:right;
+}
+.county-chart-axis{
+  display:flex;
+  justify-content:space-between;
+  margin:0 77px 12px 165px;
+  font-size:11px;
+  color:#63736d;
+}
+.chart-key{
+  display:flex;
+  gap:20px;
+  font-size:12px;
+  flex-wrap:wrap;
+}
+@media(max-width:700px){
+  .chart-grid{grid-template-columns:1fr}
+  .county-chart-row{
+    grid-template-columns:100px 1fr 55px;
+    gap:7px;
+  }
+  .county-chart-axis{
+    margin-left:115px;
+    margin-right:67px;
+  }
+}
+</style>
+
+<script>
+function comparisonBar(label,value,color){
+  const width=Math.max(0,Math.min(100,value));
+  return `
+    <div class="compare-label">
+      <span>${label}</span>
+      <strong>${percent(value)}</strong>
+    </div>
+    <div class="chart-track">
+      <div class="chart-bar"
+        style="width:${width}%;background:${color}">
+      </div>
+    </div>`;
+}
+
+function updateCharts(c){
+  let charts=document.getElementById("visual-charts");
+
+  if(!charts){
+    charts=document.createElement("section");
+    charts.id="visual-charts";
+    charts.className="chart-section";
+    document.getElementById("report").after(charts);
+  }
+
+  const arrestShare=c.total ? c.arrests/c.total*100 : 0;
+  const convictionShare=c.total ? c.convictions/c.total*100 : 0;
+  const highestRate=Math.max(...counties.map(item=>item.rate));
+  const axisMax=Math.max(10,Math.ceil(highestRate/10)*10);
+
+  charts.innerHTML=`
+    <h2>${c.name} County · Visual report</h2>
+
+    <div class="chart-grid">
+
+      <article class="chart-box">
+        <h3>What was cleared?</h3>
+        <p class="chart-description">
+          Composition of reported cleared records
+        </p>
+
+        <div class="donut-layout">
+          <div class="donut"
+            role="img"
+            aria-label="Arrest records:
+              ${arrestShare.toFixed(1)} percent.
+              Conviction records:
+              ${convictionShare.toFixed(1)} percent."
+            style="background:conic-gradient(
+              #285b50 0% ${arrestShare}%,
+              #b9ce8a ${arrestShare}% 100%)">
+
+            <div class="donut-hole">
+              <strong>${format(c.total)}</strong>
+              <span>records cleared</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="legend-item">
+              <span class="legend-dot"
+                style="background:#285b50"></span>
+              Arrest records
+              <span class="legend-value">
+                ${format(c.arrests)}
+                · ${arrestShare.toFixed(1)}%
+              </span>
+            </div>
+
+            <div class="legend-item">
+              <span class="legend-dot"
+                style="background:#b9ce8a"></span>
+              Conviction records
+              <span class="legend-value">
+                ${format(c.convictions)}
+                · ${convictionShare.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <p class="chart-small-note">
+          This shows the mix of cleared records,
+          not the percentage of eligible records cleared.
+        </p>
+      </article>
+
+      <article class="chart-box">
+        <h3>How does the county compare?</h3>
+        <p class="chart-description">
+          Both charts use a 0–100% scale.
+          California averages are unweighted county averages.
+        </p>
+
+        <div class="compare-group">
+          <div class="compare-title">
+            Clearance ratio
+          </div>
+
+          ${comparisonBar(c.name,c.rate,"#285b50")}
+          ${comparisonBar("58-county average",average,"#b9ce8a")}
+        </div>
+
+        <div class="compare-group">
+          <div class="compare-title">
+            Disposition gap
+          </div>
+
+          ${comparisonBar(c.name,c.gap,"#ae7350")}
+          ${comparisonBar("58-county average",averageGap,"#cbbba5")}
+        </div>
+
+        <p class="chart-small-note">
+          Clearance ratio uses historical arrests,
+          not eligible records.
+          Disposition gap is shown as supplied;
+          its eligibility implications are unverified.
+        </p>
+      </article>
+
+    </div>
+
+    <article class="chart-box" style="margin-top:20px">
+      <h3>The statewide picture</h3>
+      <p class="chart-description">
+        All 58 counties, ordered by clearance ratio.
+        Click a county name to change the report.
+      </p>
+
+      <div class="chart-key">
+        <span>
+          <i class="legend-dot"
+            style="background:#285b50"></i>
+          Selected county
+        </span>
+        <span>
+          <i class="legend-dot"
+            style="background:#b9ce8a"></i>
+          Other counties
+        </span>
+      </div>
+
+      <div class="county-chart">
+        <div class="county-chart-axis">
+          <span>0%</span>
+          <span>${axisMax/2}%</span>
+          <span>${axisMax}%</span>
+        </div>
+
+        ${counties.map(item=>`
+          <div class="county-chart-row
+            ${item===c?"active":""}">
+
+            <button class="county-chart-name"
+              data-chart-county="${item.name}"
+              aria-label="View ${item.name} County">
+              ${item.name}
+            </button>
+
+            <div class="chart-track">
+              <div class="chart-bar"
+                style="
+                  width:${item.rate/axisMax*100}%;
+                  background:${item===c?"#285b50":"#b9ce8a"};
+                ">
+              </div>
+            </div>
+
+            <span class="county-chart-value">
+              ${percent(item.rate)}
+            </span>
+
+          </div>
+        `).join("")}
+      </div>
+
+      <p class="chart-small-note">
+        These ratios describe the supplied snapshot.
+        They do not measure eligible-record completion
+        or establish responsibility for implementation gaps.
+      </p>
+    </article>
+  `;
+
+  charts.querySelectorAll("[data-chart-county]").forEach(button=>{
+    button.addEventListener("click",()=>{
+      const county=counties.find(
+        item=>item.name===button.dataset.chartCounty
+      );
+
+      showCounty(county);
+
+      document.getElementById("report").scrollIntoView({
+        behavior:"smooth"
+      });
+    });
+  });
+}
+
+// Keep the existing search and table working,
+// and refresh the charts whenever the county changes.
+const originalShowCounty=showCounty;
+
+showCounty=function(county){
+  originalShowCounty(county);
+  updateCharts(county);
+};
+
+updateCharts(selected);
+</script>
 <body>
 <header>CLEAN SLATE · CALIFORNIA</header>
 <main>
