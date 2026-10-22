@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clean Slate County Report Card</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f5f5ed;color:#173c39;font:16px/1.6 Arial,sans-serif}
+header{padding:22px 6%;border-bottom:1px solid #d8ded2;font-weight:bold;letter-spacing:3px}
+main{max-width:1100px;margin:auto;padding:45px 24px}
+h1{font:52px/1.1 Georgia,serif;margin:15px 0}
+h2{font:32px Georgia,serif}
+.subtitle{color:#63736d}
+label{display:block;font-weight:bold;margin-top:30px}
+input{width:100%;max-width:600px;padding:16px;margin:10px 0;border:1px solid #97ab92;border-radius:8px;font:inherit}
+#results{max-width:600px;background:white}
+#results button{display:block;width:100%;padding:12px;text-align:left;border:0;background:white;color:#173c39;font:inherit;cursor:pointer}
+#results button:hover,#results button:focus{background:#d9e9b5}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.card{background:white;border:1px solid #d8ded2;border-radius:8px;padding:22px}
+.card small{display:block;color:#63736d}
+.number{font:34px Georgia,serif;margin:12px 0}
+.note{font-size:13px;color:#63736d}
+.badge{background:#d9e9b5;padding:8px 14px;border-radius:20px;display:inline-block;font-size:14px}
+.table-wrap{overflow:auto}
+table{border-collapse:collapse;width:100%;background:white}
+th,td{text-align:left;padding:13px;border-bottom:1px solid #d8ded2;white-space:nowrap}
+th{font-size:12px;color:#63736d}
+td button{background:none;border:0;color:#173c39;text-decoration:underline;cursor:pointer;font:inherit}
+.selected{background:#e5edd9}
+section{margin-top:35px}
+footer{margin-top:40px;border-top:1px solid #d8ded2;padding-top:20px}
+@media(max-width:700px){.cards{grid-template-columns:1fr 1fr}h1{font-size:38px}}
+</style>
+</head>
+<body>
+<header>CLEAN SLATE · CALIFORNIA</header>
+<main>
+<p class="subtitle">58 COUNTIES. ONE PROMISE.</p>
+<h1>A clean slate.<br>How far have we come?</h1>
+<p class="subtitle">Explore automatic record relief across California counties.</p>
+
+<label for="search">Find your county / 搜尋郡名</label>
+<input id="search" type="search" placeholder="Try Alameda or Los Angeles" autocomplete="off">
+<div id="results" aria-live="polite"></div>
+
+<section id="report" aria-live="polite"></section>
+
+<section>
+<h2>All 58 counties</h2>
+<p class="note">Ranked by records cleared as a percentage of historical arrests. Click a county to view its report.</p>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>Rank</th><th>County</th><th>Records cleared</th>
+<th>Clearance ratio</th><th>Disposition gap</th>
+</tr></thead>
+<tbody id="ranking"></tbody>
+</table>
+</div>
+</section>
+
+<footer>
+<h2>About these numbers</h2>
+<p class="note">
+Source: the supplied dashboard_counties.csv, described as California DOJ
+OpenJustice data. This page uses a manually embedded snapshot, not a live feed.
+</p>
+<p class="note">
+Clearance ratio = arrest and conviction records cleared ÷ historical arrests.
+This is not the percentage of eligible records cleared. Records are not unique people.
+The historical arrest period and reporting date were not supplied.
+</p>
+<p class="note">
+Disposition gap is shown as supplied. Its denominator and effect on relief
+eligibility require source documentation; it does not by itself establish
+that records cannot receive relief.
+</p>
+<p class="note">
+The comparison uses the unweighted average of all 58 counties.
+Rankings describe the supplied data and do not establish which agency is
+responsible for implementation gaps. Tied ratios share a rank.
+This basic version does not include the separate 2022–2024 annual dataset.
+</p>
+</footer>
+</main>
+
+<script>
+// County, arrest records cleared, conviction records cleared,
+// historical arrests, supplied disposition gap (%).
+const data=[
+["Alameda",356875,107294,3060136,17.2],
+["Alpine",502,816,4447,32.0],
+["Amador",8236,2945,54373,20.8],
+["Butte",138276,24943,405391,41.0],
+["Calaveras",10879,3334,68924,24.7],
+["Colusa",7250,2550,51690,26.5],
+["Contra Costa",365490,60131,1384240,42.3],
+["Del Norte",10367,3571,82930,17.1],
+["El Dorado",39475,17226,264053,24.4],
+["Fresno",304054,56633,2087183,31.7],
+["Glenn",9396,3823,67240,29.3],
+["Humboldt",66247,18781,369140,26.6],
+["Imperial",84908,24394,335071,41.8],
+["Inyo",8576,3658,47700,36.8],
+["Kern",273777,105171,1815633,19.6],
+["Kings",83421,10837,367141,40.6],
+["Lake",28602,7885,158825,24.9],
+["Lassen",12989,3498,52141,35.8],
+["Los Angeles",2647148,1480264,17211024,21.7],
+["Madera",62554,35396,242800,31.8],
+["Marin",64031,15891,392077,30.6],
+["Mariposa",4654,2535,29294,25.9],
+["Mendocino",65493,13050,220609,40.8],
+["Merced",113535,16281,604016,44.4],
+["Modoc",5403,1293,20890,36.7],
+["Mono",5447,3339,21624,32.1],
+["Monterey",218024,46207,787048,34.7],
+["Napa",38629,17355,203072,28.6],
+["Nevada",29398,10896,149385,34.3],
+["Orange",1071319,225096,4513406,32.8],
+["Placer",83675,27560,414712,29.1],
+["Plumas",6614,3244,45542,30.9],
+["Riverside",775550,153470,2483589,40.4],
+["Sacramento",530115,104059,2262751,32.1],
+["San Benito",17214,6375,87922,31.3],
+["San Bernardino",878149,151817,3452670,36.2],
+["San Diego",1398034,216373,5149988,45.0],
+["San Francisco",211450,30738,1872185,24.8],
+["San Joaquin",246214,52517,1285313,26.0],
+["San Luis Obispo",116665,42137,502360,29.4],
+["San Mateo",164932,62201,935412,26.6],
+["Santa Barbara",202061,68348,1083044,31.8],
+["Santa Clara",545837,172829,2757747,21.5],
+["Santa Cruz",184033,31762,645573,45.4],
+["Shasta",87248,21191,454056,41.8],
+["Sierra",847,558,9496,19.1],
+["Siskiyou",19101,4583,103828,39.1],
+["Solano",139903,21282,735496,20.1],
+["Sonoma",186089,50059,862670,25.7],
+["Stanislaus",170678,48231,1097610,26.2],
+["Sutter",43927,10162,183142,50.6],
+["Tehama",23834,5368,136724,35.9],
+["Trinity",5280,2111,32207,24.8],
+["Tulare",339386,52284,976196,51.5],
+["Tuolumne",16445,6184,115742,26.0],
+["Ventura",334469,70933,1490096,35.9],
+["Yolo",99197,17841,368405,38.7],
+["Yuba",35737,8771,195031,40.6]
+];
+
+const counties=data.map(([name,arrests,convictions,historical,gap])=>({
+name,arrests,convictions,historical,gap,
+total:arrests+convictions,
+rate:Number(((arrests+convictions)/historical*100).toFixed(2))
+}));
+const average=counties.reduce((s,c)=>s+c.rate,0)/counties.length;
+const averageGap=counties.reduce((s,c)=>s+c.gap,0)/counties.length;
+counties.sort((a,b)=>b.rate-a.rate);
+counties.forEach(c=>{
+c.rank=1+counties.filter(other=>other.rate>c.rate).length;
+});
+const format=n=>n.toLocaleString("en-US");
+const percent=n=>n.toFixed(2)+"%";
+let selected;
+
+function card(label,value,note){
+return `<article class="card"><small>${label}</small>
+<div class="number">${value}</div><small>${note}</small></article>`;
+}
+
+function showCounty(c){
+selected=c;
+document.getElementById("search").value=c.name;
+document.getElementById("results").replaceChildren();
+const difference=c.rate-average;
+document.getElementById("report").innerHTML=`
+<h2>${c.name} County</h2>
+<p class="badge">#${c.rank} of 58 · clearance ratio</p>
+<div class="cards">
+${card("Total records cleared",format(c.total),"Records, not unique people")}
+${card("Arrest records cleared",format(c.arrests),"Supplied county snapshot")}
+${card("Conviction records cleared",format(c.convictions),"Supplied county snapshot")}
+${card("Clearance ratio",percent(c.rate),
+Math.abs(difference).toFixed(2)+" percentage points "+
+(difference>=0?"above":"below")+" county average")}
+${card("Disposition gap",percent(c.gap),
+"58-county average: "+percent(averageGap))}
+${card("County-average clearance ratio",percent(average),
+"Unweighted average of 58 counties")}
+</div>
+<p class="note">Historical arrests used as denominator:
+${format(c.historical)}. See methodology below.</p>`;
+renderRanking();
+}
+
+function renderRanking(){
+const tbody=document.getElementById("ranking");
+tbody.replaceChildren();
+counties.forEach(c=>{
+const row=document.createElement("tr");
+if(c===selected)row.className="selected";
+row.innerHTML=`<td>${c.rank}</td><td></td>
+<td>${format(c.total)}</td><td>${percent(c.rate)}</td>
+<td>${percent(c.gap)}</td>`;
+const button=document.createElement("button");
+button.textContent=c.name;
+button.onclick=()=>{
+showCounty(c);
+document.getElementById("report").scrollIntoView({behavior:"smooth"});
+};
+row.children[1].append(button);
+tbody.append(row);
+});
+}
+
+const search=document.getElementById("search");
+search.addEventListener("input",()=>{
+const results=document.getElementById("results");
+results.replaceChildren();
+const query=search.value.trim().toLowerCase().replace(/\s+county$/,"");
+if(!query)return;
+const matches=counties
+.filter(c=>c.name.toLowerCase().includes(query))
+.sort((a,b)=>a.name.localeCompare(b.name));
+if(!matches.length){
+results.textContent="No matching county. Try another name.";
+return;
+}
+matches.forEach(c=>{
+const button=document.createElement("button");
+button.textContent=c.name+" County";
+button.onclick=()=>showCounty(c);
+results.append(button);
+});
+});
+search.addEventListener("keydown",event=>{
+if(event.key==="Enter"){
+const first=document.querySelector("#results button");
+if(first)first.click();
+}
+if(event.key==="Escape"){
+document.getElementById("results").replaceChildren();
+}
+});
+
+showCounty(counties.find(c=>c.name==="Los Angeles"));
+</script>
+</body>
+</html>
