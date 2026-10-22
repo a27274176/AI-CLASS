@@ -615,5 +615,120 @@ document.getElementById("results").replaceChildren();
 
 showCounty(counties.find(c=>c.name==="Los Angeles"));
 </script>
+<style>
+/* 藍色主題 */
+body {
+  background: #f0f6fc;
+  color: #17365d;
+}
+
+header {
+  background: #17365d;
+  color: #ffffff;
+  border-bottom: 0;
+}
+
+.subtitle,
+.note,
+.card small,
+.chart-description,
+.chart-small-note,
+.county-chart-axis,
+.legend-value {
+  color: #526b87;
+}
+
+input {
+  background: #ffffff;
+  color: #17365d;
+  border-color: #92b8dd;
+}
+
+input:focus {
+  outline: 3px solid #c5def5;
+  border-color: #2875bd;
+}
+
+.card,
+.chart-box {
+  background: #ffffff;
+  border-color: #cbddee;
+  box-shadow: 0 4px 16px rgba(23, 54, 93, 0.04);
+}
+
+.badge {
+  background: #d8eafa;
+  color: #174d80;
+}
+
+#results button,
+td button,
+.county-chart-name {
+  color: #174d80;
+}
+
+#results button:hover,
+#results button:focus,
+.selected,
+.county-chart-row.active {
+  background: #e0eefb;
+}
+
+th {
+  background: #e8f1fa;
+  color: #426486;
+}
+
+th,
+td,
+footer {
+  border-color: #cbddee;
+}
+
+.chart-track {
+  background: #e8f0f8;
+}
+
+a {
+  color: #216bb0;
+}
+</style>
+
+<script>
+/* 將圖表配色一併換成藍色 */
+function applyBlueCharts() {
+  const charts = document.getElementById("visual-charts");
+  if (!charts) return;
+
+  const palette = {
+    "#285b50": "#245fa5",
+    "#b9ce8a": "#9fc9f0",
+    "#ae7350": "#477fb8",
+    "#cbbba5": "#bfd7ed"
+  };
+
+  charts.querySelectorAll("[style]").forEach(element => {
+    let style = element.getAttribute("style");
+
+    Object.entries(palette).forEach(([original, blue]) => {
+      style = style.replaceAll(original, blue);
+    });
+
+    element.setAttribute("style", style);
+  });
+}
+
+/* 搜尋或切換郡時，也保持藍色 */
+if (typeof updateCharts === "function") {
+  const previousUpdateCharts = updateCharts;
+
+  updateCharts = function(county) {
+    previousUpdateCharts(county);
+    applyBlueCharts();
+  };
+}
+
+applyBlueCharts();
+</script>
 </body>
 </html>
